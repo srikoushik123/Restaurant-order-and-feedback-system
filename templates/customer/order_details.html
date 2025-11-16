@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2>Order #{{ order.order_id }}</h2>
+        
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Order Items</h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Quantity</th>
+                                    <th>Price</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in items %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ item.item_name }}</strong>
+                                        <br><small class="text-muted">{{ item.description }}</small>
+                                    </td>
+                                    <td>{{ item.quantity }}</td>
+                                    <td>${{ "%.2f"|format(item.price) }}</td>
+                                    <td>${{ "%.2f"|format(item.quantity * item.price) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr class="table-success">
+                                    <td colspan="3" class="text-end"><strong>Grand Total:</strong></td>
+                                    <td><strong>${{ "%.2f"|format(order.total_amount) }}</strong></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Order Progress Tracking -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5>Order Progress</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="progress" style="height: 25px;">
+                            {% set progress = {
+                                'pending': 0,
+                                'confirmed': 20, 
+                                'preparing': 40,
+                                'ready': 60,
+                                'completed': 100
+                            } %}
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                 role="progressbar" 
+                                 style="width: {{ progress[order.status] }}%;"
+                                 aria-valuenow="{{ progress[order.status] }}" 
+                                 aria-valuemin="0" aria-valuemax="100">
+                                {{ order.status|title }} ({{ progress[order.status] }}%)
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <div class="row text-center small">
+                                <div class="col">
+                                    <span class="{% if order.status == 'pending' %}fw-bold text-primary{% endif %}">
+                                        📝 Pending
+                                    </span>
+                                </div>
+                                <div class="col">
+                                    <span class="{% if order.status == 'confirmed' %}fw-bold text-primary{% endif %}">
+                                        ✅ Confirmed
+                                    </span>
+                                </div>
+                                <div class="col">
+                                    <span class="{% if order.status == 'preparing' %}fw-bold text-primary{% endif %}">
+                                        👨‍🍳 Preparing
+                                    </span>
+                                </div>
+                                <div class="col">
+                                    <span class="{% if order.status == 'ready' %}fw-bold text-primary{% endif %}">
+                                        📦 Ready
+                                    </span>
+                                </div>
+                                <div class="col">
+                                    <span class="{% if order.status == 'completed' %}fw-bold text-primary{% endif %}">
+                                        🎉 Completed
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Feedback Section -->
+                {% if order.status == 'completed' %}
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5>
+                            {% if feedback %}
+                            Your Feedback
+                            {% else %}
+                            Share Your Experience
+                            {% endif %}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if feedback %}
+                        <div class="alert alert-success">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6>Thank you for your feedback!</h6>
+                                    <div class="text-warning mb-2">
+                                        {% for i in range(1, 6) %}
+                                            {% if i <= feedback.rating %}
+                                                ★
+                                            {% else %}
+                                                ☆
+                                            {% endif %}
+                                        {% endfor %}
+                                        <span class="text-muted ms-2">({{ feedback.rating }}/5)</span>
+                                    </div>
+                                    {% if feedback.comment %}
+                                    <p class="mb-0"><strong>Your comment:</strong> "{{ feedback.comment }}"</p>
+                                    {% endif %}
+                                </div>
+                                <small class="text-muted">
+                                    {{ feedback.created_at.strftime('%Y-%m-%d %H:%M') }}
+                                </small>
+                            </div>
+                        </div>
+                        {% else %}
+                        <form method="POST" action="{{ url_for('submit_feedback', order_id=order.order_id) }}">
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">How would you rate your experience?</label>
+                                <div class="text-center">
+                                    {% for i in range(1, 6) %}
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="rating" 
+                                               id="rating{{ i }}" value="{{ i }}" required>
+                                        <label class="form-check-label fs-4" for="rating{{ i }}">
+                                            ☆
+                                        </label>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                <div class="text-center mt-2">
+                                    <small class="text-muted" id="ratingText">Select a rating</small>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="comment" class="form-label fw-bold">Additional Comments (Optional)</label>
+                                <textarea class="form-control" id="comment" name="comment" rows="4" 
+                                          placeholder="Tell us about your experience... What did you like? How can we improve?"></textarea>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary btn-lg w-100">
+                                <i class="fas fa-paper-plane"></i> Submit Feedback
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Order Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <strong>Status:</strong><br>
+                            <span class="badge 
+                                {% if order.status == 'completed' %}bg-success
+                                {% elif order.status == 'pending' %}bg-warning
+                                {% elif order.status == 'cancelled' %}bg-danger
+                                {% else %}bg-info{% endif %} fs-6">
+                                {{ order.status|title }}
+                            </span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <strong>Order Date:</strong><br>
+                            {{ order.created_at.strftime('%Y-%m-%d at %H:%M') }}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <strong>Last Updated:</strong><br>
+                            {{ order.updated_at.strftime('%Y-%m-%d at %H:%M') }}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <strong>Total Amount:</strong><br>
+                            <span class="fs-5 text-success">${{ "%.2f"|format(order.total_amount) }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mt-3">
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a href="{{ url_for('order_history') }}" class="btn btn-outline-primary">
+                                <i class="fas fa-arrow-left"></i> Back to Orders
+                            </a>
+                            <a href="{{ url_for('customer_dashboard') }}" class="btn btn-outline-success">
+                                <i class="fas fa-utensils"></i> Order More Food
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Rating selection feedback
+document.querySelectorAll('input[name="rating"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const rating = this.value;
+        const ratingText = document.getElementById('ratingText');
+        const labels = document.querySelectorAll('label[for^="rating"]');
+        
+        // Update star display
+        labels.forEach((label, index) => {
+            label.textContent = (index + 1) <= rating ? '★' : '☆';
+        });
+        
+        // Update rating text
+        const ratingMessages = {
+            '1': 'Poor - We apologize for the bad experience',
+            '2': 'Fair - We\'ll work to improve',
+            '3': 'Good - Thank you for your feedback',
+            '4': 'Very Good - We\'re glad you enjoyed!',
+            '5': 'Excellent - Thank you for the perfect rating!'
+        };
+        ratingText.textContent = ratingMessages[rating];
+        ratingText.className = 'text-muted fw-bold';
+    });
+});
+</script>
+{% endblock %}

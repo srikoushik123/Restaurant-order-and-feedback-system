@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2>Manage Orders</h2>
+        
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Customer</th>
+                        <th>Date</th>
+                        <th>Total Amount</th>
+                        <th>Status</th>
+                        <th>Items</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr>
+                        <td>#{{ order.order_id }}</td>
+                        <td>{{ order.username }}</td>
+                        <td>{{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>${{ "%.2f"|format(order.total_amount) }}</td>
+                        <td>
+                            <span class="badge 
+                                {% if order.status == 'completed' %}bg-success
+                                {% elif order.status == 'pending' %}bg-warning
+                                {% elif order.status == 'cancelled' %}bg-danger
+                                {% else %}bg-info{% endif %}">
+                                {{ order.status|title }}
+                            </span>
+                        </td>
+                        <td>{{ order.item_count }} items</td>
+                        <td>
+                            <div class="btn-group">
+                                <a href="{{ url_for('order_details', order_id=order.order_id) }}" 
+                                   class="btn btn-sm btn-outline-primary">View</a>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" 
+                                            data-bs-toggle="dropdown">
+                                        Status
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        {% for status in ['pending', 'confirmed', 'preparing', 'ready', 'completed', 'cancelled'] %}
+                                        <li>
+                                            <form method="POST" action="{{ url_for('update_order_status', order_id=order.order_id) }}">
+                                                <input type="hidden" name="status" value="{{ status }}">
+                                                <button type="submit" class="dropdown-item {% if order.status == status %}active{% endif %}">
+                                                    {{ status|title }}
+                                                </button>
+                                            </form>
+                                        </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

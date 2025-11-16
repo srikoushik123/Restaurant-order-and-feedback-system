@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Our Menu</h2>
+            <a href="{{ url_for('order_history') }}" class="btn btn-outline-primary">
+                <i class="fas fa-history"></i> View My Orders
+            </a>
+        </div>
+
+        <form method="POST" action="{{ url_for('place_order') }}" id="orderForm">
+            <div class="row">
+                {% for item in menu_items %}
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ item.name }}</h5>
+                            <p class="card-text text-muted">{{ item.description }}</p>
+                            <p class="card-text"><strong class="text-success">${{ "%.2f"|format(item.price) }}</strong></p>
+                            <div class="input-group">
+                                <span class="input-group-text">Qty</span>
+                                <input type="number" name="item_{{ item.item_id }}" 
+                                       class="form-control item-quantity" 
+                                       data-price="{{ item.price }}"
+                                       value="0" min="0" max="10"
+                                       onchange="updateTotal()">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            {% if menu_items %}
+            <div class="card mt-4">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h5>Order Summary</h5>
+                            <p class="mb-0">Total: <strong id="totalAmount">$0.00</strong></p>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-shopping-cart"></i> Place Order - $<span id="submitTotal">0.00</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<script>
+function updateTotal() {
+    let total = 0;
+    const quantityInputs = document.querySelectorAll('.item-quantity');
+    
+    quantityInputs.forEach(input => {
+        const quantity = parseInt(input.value) || 0;
+        const price = parseFloat(input.dataset.price);
+        total += quantity * price;
+    });
+    
+    document.getElementById('totalAmount').textContent = '$' + total.toFixed(2);
+    document.getElementById('submitTotal').textContent = total.toFixed(2);
+}
+
+// Initialize total on page load
+document.addEventListener('DOMContentLoaded', updateTotal);
+</script>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2>Customer Feedback</h2>
+        
+        {% if feedback_list %}
+        <div class="row">
+            {% for feedback in feedback_list %}
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <h5 class="card-title">{{ feedback.username }}</h5>
+                            <div class="text-warning">
+                                {% for i in range(feedback.rating) %}★{% endfor %}
+                                {% for i in range(5 - feedback.rating) %}☆{% endfor %}
+                            </div>
+                        </div>
+                        <p class="card-text">{{ feedback.comment }}</p>
+                        <div class="text-muted small">
+                            <p class="mb-1">Order #{{ feedback.order_id }}</p>
+                            <p class="mb-0">{{ feedback.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            <p>No feedback received yet.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
